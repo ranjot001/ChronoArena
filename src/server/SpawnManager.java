@@ -1,0 +1,48 @@
+package server;
+
+import common.Constants;
+import common.ItemState;
+import common.ItemType;
+import common.Position;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class SpawnManager {
+    private final Random random = new Random();
+    private final AtomicInteger itemCounter = new AtomicInteger(1);
+
+    private final List<Position> playerSpawns = new ArrayList<>();
+
+    public SpawnManager() {
+        playerSpawns.add(new Position(60, 60));
+        playerSpawns.add(new Position(Constants.MAP_WIDTH - 120, 60));
+        playerSpawns.add(new Position(60, Constants.MAP_HEIGHT - 120));
+        playerSpawns.add(new Position(Constants.MAP_WIDTH - 120, Constants.MAP_HEIGHT - 120));
+        playerSpawns.add(new Position(Constants.MAP_WIDTH / 2, 60));
+        playerSpawns.add(new Position(Constants.MAP_WIDTH / 2, Constants.MAP_HEIGHT - 120));
+        playerSpawns.add(new Position(60, Constants.MAP_HEIGHT / 2));
+        playerSpawns.add(new Position(Constants.MAP_WIDTH - 120, Constants.MAP_HEIGHT / 2));
+    }
+
+    public Position getSpawnForPlayerIndex(int index) {
+        Position base = playerSpawns.get(index % playerSpawns.size());
+        return base.copy();
+    }
+
+    public ItemState spawnRandomItem() {
+        ItemType type = random.nextBoolean() ? ItemType.ENERGY : ItemType.FREEZE;
+        int x = 80 + random.nextInt(Math.max(1, Constants.MAP_WIDTH - 160));
+        int y = 80 + random.nextInt(Math.max(1, Constants.MAP_HEIGHT - 160));
+
+        return new ItemState(
+                "ITEM-" + itemCounter.getAndIncrement(),
+                type,
+                new Position(x, y),
+                true,
+                System.currentTimeMillis()
+        );
+    }
+}
