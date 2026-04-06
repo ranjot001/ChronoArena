@@ -1,5 +1,7 @@
 package client;
 
+import javax.swing.*;
+
 public class ClientMain {
 
     public static void main(String[] args) {
@@ -14,8 +16,14 @@ public class ClientMain {
 
         try {
             gameClient.connect();
+
+            SwingUtilities.invokeLater(() -> {
+                GameFrame frame = new GameFrame(gameClient);
+                frame.setVisible(true);
+                frame.requestFocusInWindow();
+            });
+
             System.out.println("Connected successfully as player " + gameClient.getClientState().getLocalPlayerId());
-            System.out.println("Next step: attach GUI and input handling.");
         } catch (Exception e) {
             System.err.println("Client failed: " + e.getMessage());
             e.printStackTrace();
