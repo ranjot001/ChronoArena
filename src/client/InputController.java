@@ -2,6 +2,7 @@ package client;
 
 import common.PlayerActionType;
 
+import javax.swing.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.HashSet;
@@ -11,48 +12,21 @@ public class InputController extends KeyAdapter {
 
     private final UdpSender udpSender;
     private final Set<Integer> pressedKeys = new HashSet<>();
+    private final Timer movementTimer;
 
     public InputController(UdpSender udpSender) {
         this.udpSender = udpSender;
+        this.movementTimer = new Timer(60, e -> sendCurrentMovement());
+        this.movementTimer.start();
     }
 
     @Override
     public void keyPressed(KeyEvent e) {
         int keyCode = e.getKeyCode();
-
-        if (pressedKeys.contains(keyCode)) {
-            return;
-        }
         pressedKeys.add(keyCode);
 
-        switch (keyCode) {
-            case KeyEvent.VK_W:
-            case KeyEvent.VK_UP:
-                udpSender.sendAction(PlayerActionType.MOVE_UP);
-                break;
-
-            case KeyEvent.VK_S:
-            case KeyEvent.VK_DOWN:
-                udpSender.sendAction(PlayerActionType.MOVE_DOWN);
-                break;
-
-            case KeyEvent.VK_A:
-            case KeyEvent.VK_LEFT:
-                udpSender.sendAction(PlayerActionType.MOVE_LEFT);
-                break;
-
-            case KeyEvent.VK_D:
-            case KeyEvent.VK_RIGHT:
-                udpSender.sendAction(PlayerActionType.MOVE_RIGHT);
-                break;
-
-            case KeyEvent.VK_SPACE:
-            case KeyEvent.VK_F:
-                udpSender.sendAction(PlayerActionType.FREEZE_ATTACK);
-                break;
-
-            default:
-                break;
+        if (keyCode == KeyEvent.VK_SPACE || keyCode == KeyEvent.VK_F) {
+            udpSender.sendAction(PlayerActionType.FREEZE_ATTACK);
         }
     }
 
@@ -60,20 +34,47 @@ public class InputController extends KeyAdapter {
     public void keyReleased(KeyEvent e) {
         pressedKeys.remove(e.getKeyCode());
 
-        switch (e.getKeyCode()) {
-            case KeyEvent.VK_W:
-            case KeyEvent.VK_UP:
-            case KeyEvent.VK_S:
-            case KeyEvent.VK_DOWN:
-            case KeyEvent.VK_A:
-            case KeyEvent.VK_LEFT:
-            case KeyEvent.VK_D:
-            case KeyEvent.VK_RIGHT:
-                udpSender.sendAction(PlayerActionType.STOP);
-                break;
-
-            default:
-                break;
+        if (isMovementKey(e.getKeyCode()) && !hasMovementKeyPressed()) {
+            udpSender.sendAction(PlayerActionType.STOP);
         }
+    }
+
+    private void sendCurrentMovement() {
+        if (pressedKeys.contains(KeyEvent.VK_W) || pressedKeys.contains(KeyEvent.VK_UP)) {
+            udpSender.sendAction(PlayerActionType.MOVE_UP);
+            return;
+        }
+        if (pressedKeys.contains(KeyEvent.VK_S) || pressedKeys.contains(KeyEvent.VK_DOWN)) {
+            udpSender.sendAction(PlayerActionType.MOVE_DOWN);
+            return;
+        }
+        if (pressedKeys.contains(KeyEvent.VK_A) || pressedKeys.contains(KeyEvent.VK_LEFT)) {
+            udpSender.sendAction(PlayerActionType.MOVE_LEFT);
+            return;
+        }
+        if (pressedKeys.contains(KeyEvent.VK_D) || pressedKeys.contains(KeyEvent.VK_RIGHT)) {
+            udpSender.sendAction(PlayerActionType.MOVE_RIGHT);
+            return;
+        }
+    }
+
+    private boolean isMovementKey(int keyCode) {
+        return keyCode == KeyEvent.VK_W ||
+                keyCode == KeyEvent.VK_A ||
+                keyCode == KeyEvent.VK_S ||
+                keyCode == KeyEvent.VK_D ||
+                keyCode == KeyEvent.VK_UP ||
+                keyCode == KeyEvent.VK_DOWN ||
+                keyCode == KeyEvent.VK_LEFT ||
+                keyCode == KeyEvent.VK_RIGHT;
+    }
+
+    private boolean hasMovementKeyPressed() {
+        for (Integer key : pressedKeys) {
+            if (isMovementKey(key)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

@@ -35,6 +35,7 @@ public class GameServer {
 
     private Thread udpThread;
     private Thread gameLoopThread;
+    private Thread consoleThread;
 
     private UdpListener udpListener;
     private GameLoop gameLoop;
@@ -74,7 +75,7 @@ public class GameServer {
     }
 
     private void startBackgroundWorkers() {
-        udpListener = new UdpListener(udpPort, fairActionQueue, gameStateManager, killSwitchManager);
+        udpListener = new UdpListener(udpPort, fairActionQueue, gameStateManager, killSwitchManager, this);
         udpThread = new Thread(udpListener);
         udpThread.setName("udp-listener");
         udpThread.start();
@@ -83,6 +84,11 @@ public class GameServer {
         gameLoopThread = new Thread(gameLoop);
         gameLoopThread.setName("game-loop");
         gameLoopThread.start();
+
+        consoleThread = new Thread(new ServerConsole(this));
+        consoleThread.setName("server-console");
+        consoleThread.setDaemon(true);
+        consoleThread.start();
     }
 
     public synchronized ClientSession registerClient(String playerName,
@@ -118,6 +124,10 @@ public class GameServer {
         return new Position(50, 50);
     }
 
+    public ClientSession getSession(int playerId) {
+        return sessions.get(playerId);
+    }
+
     public void disconnectClient(int playerId) {
         ClientSession session = sessions.get(playerId);
         if (session == null) {
@@ -141,6 +151,19 @@ public class GameServer {
             }
         }
         return active;
+    }
+
+    public void printConnectedPlayers() {
+        Collection<ClientSession> active = getConnectedSessions();
+        if (active.isEmpty()) {
+            System.out.println("No connected players.");
+            return;
+        }
+
+        System.out.println("Connected players:");
+        for (ClientSession session : active) {
+            System.out.println("  #" + session.getPlayerId() + " " + session.getPlayerName());
+        }
     }
 
     public void killPlayer(int playerId) {

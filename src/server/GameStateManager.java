@@ -7,9 +7,9 @@ import common.ItemType;
 import common.PlayerActionType;
 import common.PlayerState;
 import common.Position;
+import common.UdpActionMessage;
 import common.ZoneControlState;
 import common.ZoneStateModel;
-import common.UdpActionMessage;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -127,6 +127,14 @@ public class GameStateManager {
 
     public synchronized Position getSpawnForNewPlayer(int playerIndex) {
         return spawnManager.getSpawnForPlayerIndex(playerIndex);
+    }
+
+    public synchronized List<ZoneStateModel> getZoneCopies() {
+        List<ZoneStateModel> zoneCopies = new ArrayList<>();
+        for (ZoneStateModel zone : zones.values()) {
+            zoneCopies.add(zone.copy());
+        }
+        return zoneCopies;
     }
 
     public synchronized void processActions(List<QueuedPlayerAction> actions, KillSwitchManager killSwitchManager) {
@@ -289,6 +297,7 @@ public class GameStateManager {
                 zone.setContenderPlayerId(null);
                 zone.setState(ZoneControlState.CONTROLLED);
                 zone.setLastPointAwardTimeMs(now);
+                zone.setGraceExpiryTimeMs(0L);
                 serverNotice = player.getPlayerName() + " captured " + zone.getZoneId();
             }
         }
@@ -378,7 +387,7 @@ public class GameStateManager {
         }
 
         if (now - lastItemSpawnTimeMs >= Constants.ITEM_SPAWN_INTERVAL_MS) {
-            ItemState item = spawnManager.spawnRandomItem();
+            ItemState item = spawnManager.spawnRandomItem(getZoneCopies());
             items.put(item.getItemId(), item);
             lastItemSpawnTimeMs = now;
         }

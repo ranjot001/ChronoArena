@@ -1,7 +1,5 @@
 package server;
 
-import common.PlayerState;
-
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -85,6 +83,15 @@ public class ClientSession {
         this.lastProcessedSequenceNumber = lastProcessedSequenceNumber;
     }
 
+    public boolean shouldAcceptSequence(long incomingSequence) {
+        return incomingSequence > lastProcessedSequenceNumber;
+    }
+
+    public void markSequenceProcessed(long sequenceNumber) {
+        this.lastProcessedSequenceNumber = sequenceNumber;
+        refreshHeartbeat();
+    }
+
     public long getLastHeardFromEpochMs() {
         return lastHeardFromEpochMs;
     }
@@ -111,9 +118,5 @@ public class ClientSession {
             }
         } catch (Exception ignored) {
         }
-    }
-
-    public PlayerState toLightweightPlayerState(PlayerState source) {
-        return source == null ? null : source.copy();
     }
 }

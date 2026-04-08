@@ -10,6 +10,7 @@ import java.io.EOFException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.net.SocketException;
 
 public class TcpClientHandler implements Runnable {
 
@@ -91,7 +92,18 @@ public class TcpClientHandler implements Runnable {
             }
 
         } catch (EOFException eofException) {
-            System.out.println("Client disconnected abruptly: playerId=" + playerId);
+            if (playerId != -1) {
+                System.out.println("Client disconnected: playerId=" + playerId);
+            }
+        } catch (SocketException socketException) {
+            String msg = socketException.getMessage();
+            if (msg != null && msg.equalsIgnoreCase("Socket closed")) {
+                if (playerId != -1) {
+                    System.out.println("Client socket closed: playerId=" + playerId);
+                }
+            } else {
+                System.err.println("TCP client handler socket error: " + socketException.getMessage());
+            }
         } catch (Exception e) {
             System.err.println("TCP client handler error: " + e.getMessage());
             e.printStackTrace();
